@@ -1,0 +1,559 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8" />
+
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<title>Payment Flow â€” Prototype</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+  :root{
+
+    --red: #c8102e;      /* strong red accent */
+
+    --red-2: #ff4d5a;
+
+    --bg: #ffffff;
+
+    --card-bg: #ffffff;
+
+    --muted: #6b6b6b;
+
+    --text: #0b0b0b;
+
+    --radius:12px;
+
+    --maxw:760px;
+
+    --gutter:20px;
+
+  }
+
+  *{box-sizing:border-box}
+
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+
+  /* center everything */
+
+  .stage{
+
+    min-height:100vh;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:40px 20px;
+
+  }
+
+  .container{
+
+    width:100%;
+
+    max-width:var(--maxw);
+
+    border-radius:14px;
+
+    box-shadow: 0 20px 50px rgba(19,19,19,0.06);
+
+    overflow:hidden;
+
+    background: linear-gradient(180deg,#fff,#fff);
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:0;
+
+    border:1px solid rgba(10,10,10,0.04);
+
+  }
+
+  /* header */
+
+  .head {
+
+    padding:22px 28px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    border-bottom:1px solid rgba(10,10,10,0.04);
+
+    gap:12px;
+
+  }
+
+  .brand {
+
+    display:flex;align-items:center;gap:12px;
+
+  }
+
+  .mark{
+
+    width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,var(--red),var(--red-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;box-shadow:0 8px 20px rgba(200,20,40,0.12)
+
+  }
+
+  .title { font-weight:700; font-size:18px; margin:0 }
+
+  .subtitle { color:var(--muted); font-size:13px; margin:0 }
+
+  /* content area */
+
+  .content {
+
+    padding:28px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:20px;
+
+  }
+
+  .card{
+
+    width:100%;
+
+    border-radius:12px;
+
+    padding:22px;
+
+    background:var(--card-bg);
+
+    box-shadow: 0 6px 24px rgba(15,15,15,0.03);
+
+    border:1px solid rgba(10,10,10,0.03);
+
+  }
+
+  h1,h2{margin:0}
+
+  h2{font-size:20px;margin-bottom:6px}
+
+  .lead{color:var(--muted);font-size:13px;margin-bottom:14px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+
+  .fake{
+
+    padding:12px 14px;border-radius:10px;background:#fafafa;border:1px solid rgba(10,10,10,0.04);font-weight:600;color:var(--text)
+
+  }
+
+  .full { grid-column:1/-1 }
+
+  .amount-row{display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:10px;background:linear-gradient(90deg,#fff,#fff);border:1px solid rgba(10,10,10,0.04);margin-top:12px}
+
+  .amount-left{display:flex;flex-direction:column}
+
+  .amount-amt{font-size:20px;font-weight:800;color:var(--text)}
+
+  .btn-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+
+  .btn{
+
+    padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;border:0;letter-spacing:0.2px;
+
+  }
+
+  .btn.primary{background:linear-gradient(90deg,var(--red),var(--red-2));color:white;box-shadow:0 12px 34px rgba(200,20,40,0.12)}
+
+  .btn.ghost{background:white;border:1px solid var(--red);color:var(--red);font-weight:700}
+
+  .muted-foot{font-size:12px;color:var(--muted);margin-top:12px;text-align:center}
+
+  /* receipt lines */
+
+  .line{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(10,10,10,0.03);background:#fff}
+
+  .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px}
+
+  .pending{background:rgba(200,20,40,0.06);color:var(--red)}
+
+  .paid{background:rgba(20,160,80,0.06);color:#108a3b}
+
+  /* cash app items */
+
+  .cash-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(10,10,10,0.03);background:#fff}
+
+  /* centered small footer */
+
+  .footer { padding:12px 18px;border-top:1px solid rgba(10,10,10,0.03);text-align:center;font-size:12px;color:var(--muted) }
+
+  @media (max-width:640px){
+
+    .grid{grid-template-columns:1fr}
+
+    .head{padding:16px}
+
+    .content{padding:18px}
+
+    .mark{width:44px;height:44px}
+
+  }
+
+</style>
+
+</head>
+
+<body>
+
+  <div class="stage">
+
+    <div class="container" role="application" aria-label="Payment flow">
+
+      <header class="head">
+
+        <div class="brand">
+
+          <div class="mark">P</div>
+
+          <div>
+
+            <div class="title">Wire Payment</div>
+
+            <div class="subtitle">UK account â†’ Receipt â†’ Cash App</div>
+
+          </div>
+
+        </div>
+
+        <div style="text-align:right">
+
+          <div style="font-weight:700;color:var(--red)">Â£50.00</div>
+
+          <div style="font-size:12px;color:var(--muted)">Amount due</div>
+
+        </div>
+
+      </header>
+
+      <section class="content">
+
+        <!-- Page: Account -->
+
+        <div class="card" id="page-account" style="max-width:640px">
+
+          <h2>Account Details</h2>
+
+          <div class="lead">UK bank details (JASVIR WIRE TRANSFER).</div>
+
+          <div class="grid" style="margin-top:8px">
+
+            <div>
+
+              <label>Account Name</label>
+
+              <div class="fake">JASVIR SINGH DHILLON</div>
+
+            </div>
+
+            <div>
+
+              <label>Account Number</label>
+
+              <div class="fake">02269015</div>
+
+            </div>
+
+            <div>
+
+              <label>Sort Code</label>
+
+              <div class="fake">04-29-09</div>
+
+            </div>
+
+            <div>
+
+              <label>IBAN</label>
+
+              <div class="fake"></div>
+
+            </div>
+
+            <div class="full">
+
+              <label>Bank</label>
+
+              <div class="fake">RVOLUT Bank plc</div>
+
+            </div>
+
+          </div>
+
+          <div class="amount-row" aria-hidden="false">
+
+            <div class="amount-left">
+
+              <div style="font-size:13px;color:var(--muted)">Invoice</div>
+
+              <div style="font-weight:700">INV-2025-001</div>
+
+            </div>
+
+            <div class="amount-amt">Â£50.00</div>
+
+          </div>
+
+          <div class="btn-row">
+
+            <button class="btn primary" id="to-receipt">Continue</button>
+
+            <button class="btn ghost" id="export">Export</button>
+
+          </div>
+
+          <div class="muted-foot" aria-hidden="true"></div>
+
+        </div>
+
+        <!-- Page: Receipt (hidden by default) -->
+
+        <div class="card" id="page-receipt" style="display:none;max-width:640px">
+
+          <h2>Receipt</h2>
+
+          <div class="lead">Review the pending charge below.</div>
+
+          <div style="margin-top:10px;display:grid;gap:10px">
+
+            <div class="line">
+
+              <div>
+
+                <div style="font-weight:700">Service</div>
+
+                <div style="font-size:13px;color:var(--muted)">Wire processing fee</div>
+
+              </div>
+
+              <div style="text-align:right">
+
+                <div style="font-weight:800">Â£50.00</div>
+
+                <div style="font-size:12px;color:var(--muted)">incl VAT (Pening)</div>
+
+              </div>
+
+            </div>
+
+            <div class="line">
+
+              <div style="font-weight:700">Status</div>
+
+              <div><span id="status" class="pill pending">PENDING</span></div>
+
+            </div>
+
+            <div class="line">
+
+              <div>Invoice</div>
+
+              <div style="color:var(--muted)">INV-2025-001</div>
+
+            </div>
+
+          </div>
+
+          <div class="btn-row">
+
+            <button class="btn primary" id="pay-now">Pay Now</button>
+
+            <button class="btn ghost" id="back-account">Edit</button>
+
+          </div>
+
+          <div class="muted-foot"></div>
+
+        </div>
+
+        <!-- Page: Cash App (hidden by default) -->
+
+        <div class="card" id="page-cash" style="display:none;max-width:640px">
+
+          <h2>Cash App â€” Payment</h2>
+
+          <div class="lead">Cash App <strong>XXX</strong>).</div>
+
+          <div style="margin-top:10px;display:grid;gap:10px">
+
+            <div class="cash-item">
+
+              <div>
+
+                <div style="font-weight:700">Cash App ID</div>
+
+                <div style="font-size:13px;color:var(--muted)">Send to</div>
+
+              </div>
+
+              <div style="font-weight:700">$XXX-XXX-XXXX</div>
+
+            </div>
+
+            <div class="cash-item">
+
+              <div>
+
+                <div style="font-weight:700">Recipient</div>
+
+                <div style="font-size:13px;color:var(--muted)">Receipt Account</div>
+
+              </div>
+
+              <div style="font-weight:700"> â€¢ XXX</div>
+
+            </div>
+
+            <div class="cash-item">
+
+              <div>
+
+                <div style="font-weight:700">Amount</div>
+
+                <div style="font-size:13px;color:var(--muted)">Confirm amount in Cash App</div>
+
+              </div>
+
+              <div style="font-weight:700">Â£50.00</div>
+
+            </div>
+
+          </div>
+
+          <div class="btn-row">
+
+            <button class="btn primary" id="paid">I've paid â€” Send my wire now</button>
+
+            <button class="btn ghost" id="back-receipt">Back</button>
+
+          </div>
+
+          <div class="muted-foot">Values are masked. This screen only simulates the flow.</div>
+
+        </div>
+
+      </section>
+
+      <div class="footer"></div>
+
+    </div>
+
+  </div>
+
+<script>
+
+  // Simple navigation - no data submission
+
+  (function(){
+
+    const account = document.getElementById('page-account');
+
+    const receipt = document.getElementById('page-receipt');
+
+    const cash = document.getElementById('page-cash');
+
+    const status = document.getElementById('status');
+
+    function show(p){
+
+      account.style.display = p === 'account' ? 'block' : 'none';
+
+      receipt.style.display = p === 'receipt' ? 'block' : 'none';
+
+      cash.style.display = p === 'cash' ? 'block' : 'none';
+
+      // update header price visible (already static in header)
+
+      window.scrollTo({top:0,behavior:'smooth'});
+
+    }
+
+    document.getElementById('to-receipt').addEventListener('click', () => show('receipt'));
+
+    document.getElementById('back-account').addEventListener('click', () => show('account'));
+
+    document.getElementById('pay-now').addEventListener('click', () => show('cash'));
+
+    document.getElementById('back-receipt').addEventListener('click', () => show('receipt'));
+
+    document.getElementById('paid').addEventListener('click', () => {
+
+      // Simulate successful flow: update status and return to receipt
+
+      status.textContent = 'COMPLETED';
+
+      status.classList.remove('pending');
+
+      status.classList.add('paid');
+
+      show('receipt');
+
+      // minimal visual confirmation
+
+      const toast = document.createElement('div');
+
+      toast.textContent = 'Status updated: COMPLETED';
+
+      Object.assign(toast.style,{
+
+        position:'fixed',right:'20px',bottom:'28px',padding:'10px 14px',borderRadius:'8px',background:'#111',color:'#fff',zIndex:9999,opacity:0,transition:'opacity .2s'
+
+      });
+
+      document.body.appendChild(toast);
+
+      requestAnimationFrame(()=> toast.style.opacity = 1);
+
+      setTimeout(()=> { toast.style.opacity = 0; setTimeout(()=>toast.remove(),220); }, 2000);
+
+    });
+
+    document.getElementById('export').addEventListener('click', () => {
+
+      const text = ['Invoice: INV-2025-001','Amount: Â£50.00','Status: PENDING'].join('\n');
+
+      const blob = new Blob([text], {type:'text/plain'});
+
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a'); a.href = url; a.download = 'receipt.txt'; document.body.appendChild(a); a.click(); a.remove();
+
+      URL.revokeObjectURL(url);
+
+    });
+
+    // start at account
+
+    show('account');
+
+  })();
+
+</script>
+
+</body>
+
+  </html>
