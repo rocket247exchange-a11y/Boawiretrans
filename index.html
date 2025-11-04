@@ -1,559 +1,393 @@
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
 
 <head>
 
-<meta charset="utf-8" />
+  <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Payment Flow”</title>
+  <title>Bank of America • Internal Wire Tracker</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
 
-<style>
+    :root {
 
-  :root{
+      --bofa-red: #d4001a;
 
-    --red: #c8102e;      /* strong red accent */
+      --bofa-blue: #0033a0;
 
-    --red-2: #ff4d5a;
+      --gray-bg: #f7f7f7;
 
-    --bg: #ffffff;
+    }
 
-    --card-bg: #ffffff;
+    body {
 
-    --muted: #6b6b6b;
+      font-family: 'Arial', sans-serif;
 
-    --text: #0b0b0b;
+      background-color: var(--gray-bg);
 
-    --radius:12px;
+      color: #111;
 
-    --maxw:760px;
+      margin: 0;
 
-    --gutter:20px;
+      padding: 0;
 
-  }
+      transition: all 0.4s ease;
 
-  *{box-sizing:border-box}
+    }
 
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+    header {
 
-  /* center everything */
+      background-color: var(--bofa-blue);
 
-  .stage{
+      color: white;
 
-    min-height:100vh;
+      display: flex;
 
-    display:flex;
+      align-items: center;
 
-    align-items:center;
+      padding: 15px 20px;
 
-    justify-content:center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 
-    padding:40px 20px;
+    }
 
-  }
+    header img {
 
-  .container{
+      height: 40px;
 
-    width:100%;
+      margin-right: 10px;
 
-    max-width:var(--maxw);
+    }
 
-    border-radius:14px;
+    h1 {
 
-    box-shadow: 0 20px 50px rgba(19,19,19,0.06);
+      font-size: 1.3rem;
 
-    overflow:hidden;
+      font-weight: 600;
 
-    background: linear-gradient(180deg,#fff,#fff);
+    }
 
-    display:flex;
+    main {
 
-    flex-direction:column;
+      padding: 40px 20px;
 
-    gap:0;
+      text-align: center;
 
-    border:1px solid rgba(10,10,10,0.04);
+    }
 
-  }
+    button {
 
-  /* header */
+      background-color: var(--bofa-red);
 
-  .head {
+      color: white;
 
-    padding:22px 28px;
+      border: none;
 
-    display:flex;
+      padding: 12px 24px;
 
-    align-items:center;
+      font-size: 1rem;
 
-    justify-content:space-between;
+      border-radius: 8px;
 
-    border-bottom:1px solid rgba(10,10,10,0.04);
+      cursor: pointer;
 
-    gap:12px;
+      transition: background 0.3s ease;
 
-  }
+      margin: 5px;
 
-  .brand {
+    }
 
-    display:flex;align-items:center;gap:12px;
+    button:hover {
 
-  }
+      background-color: #b30015;
 
-  .mark{
+    }
 
-    width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,var(--red),var(--red-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;box-shadow:0 8px 20px rgba(200,20,40,0.12)
+    footer {
 
-  }
+      margin-top: 50px;
 
-  .title { font-weight:700; font-size:18px; margin:0 }
+      font-size: 0.9rem;
 
-  .subtitle { color:var(--muted); font-size:13px; margin:0 }
+      color: #555;
 
-  /* content area */
+      text-align: center;
 
-  .content {
+    }
 
-    padding:28px;
+    /* Toast Notification */
 
-    display:flex;
+    .toast {
 
-    justify-content:center;
+      visibility: hidden;
 
-    align-items:center;
+      min-width: 320px;
 
-    gap:20px;
+      margin-left: -160px;
 
-  }
+      background-color: #fff;
 
-  .card{
+      color: #111;
 
-    width:100%;
+      text-align: left;
 
-    border-radius:12px;
+      border-radius: 8px;
 
-    padding:22px;
+      padding: 16px;
 
-    background:var(--card-bg);
+      position: fixed;
 
-    box-shadow: 0 6px 24px rgba(15,15,15,0.03);
+      top: 20px;
 
-    border:1px solid rgba(10,10,10,0.03);
+      left: 50%;
 
-  }
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 
-  h1,h2{margin:0}
+      z-index: 1000;
 
-  h2{font-size:20px;margin-bottom:6px}
+      border-left: 6px solid var(--bofa-red);
 
-  .lead{color:var(--muted);font-size:13px;margin-bottom:14px}
+      font-size: 0.95rem;
 
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      line-height: 1.4;
 
-  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+      opacity: 0;
 
-  .fake{
+      transform: translateY(-30px);
 
-    padding:12px 14px;border-radius:10px;background:#fafafa;border:1px solid rgba(10,10,10,0.04);font-weight:600;color:var(--text)
+      transition: all 0.5s ease;
 
-  }
+    }
 
-  .full { grid-column:1/-1 }
+    .toast.show {
 
-  .amount-row{display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:10px;background:linear-gradient(90deg,#fff,#fff);border:1px solid rgba(10,10,10,0.04);margin-top:12px}
+      visibility: visible;
 
-  .amount-left{display:flex;flex-direction:column}
+      opacity: 1;
 
-  .amount-amt{font-size:20px;font-weight:800;color:var(--text)}
+      transform: translateY(0);
 
-  .btn-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+    }
 
-  .btn{
+    /* Loading Page */
 
-    padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;border:0;letter-spacing:0.2px;
+    #transfer-page {
 
-  }
+      display: none;
 
-  .btn.primary{background:linear-gradient(90deg,var(--red),var(--red-2));color:white;box-shadow:0 12px 34px rgba(200,20,40,0.12)}
+      text-align: center;
 
-  .btn.ghost{background:white;border:1px solid var(--red);color:var(--red);font-weight:700}
+      padding: 50px 20px;
 
-  .muted-foot{font-size:12px;color:var(--muted);margin-top:12px;text-align:center}
+      background: white;
 
-  /* receipt lines */
+    }
 
-  .line{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(10,10,10,0.03);background:#fff}
+    /* Regular Spinner */
 
-  .pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px}
+    .spinner {
 
-  .pending{background:rgba(200,20,40,0.06);color:var(--red)}
+      border: 6px solid #f3f3f3;
 
-  .paid{background:rgba(20,160,80,0.06);color:#108a3b}
+      border-top: 6px solid var(--bofa-red);
 
-  /* cash app items */
+      border-radius: 50%;
 
-  .cash-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(10,10,10,0.03);background:#fff}
+      width: 70px;
 
-  /* centered small footer */
+      height: 70px;
 
-  .footer { padding:12px 18px;border-top:1px solid rgba(10,10,10,0.03);text-align:center;font-size:12px;color:var(--muted) }
+      margin: 30px auto;
 
-  @media (max-width:640px){
+      animation: spin 2s linear infinite;
 
-    .grid{grid-template-columns:1fr}
+    }
 
-    .head{padding:16px}
+    @keyframes spin {
 
-    .content{padding:18px}
+      0% { transform: rotate(0deg); }
 
-    .mark{width:44px;height:44px}
+      100% { transform: rotate(360deg); }
 
-  }
+    }
 
-</style>
+    .transfer-info {
+
+      background: var(--gray-bg);
+
+      padding: 20px;
+
+      border-radius: 10px;
+
+      display: inline-block;
+
+      text-align: left;
+
+      margin-top: 20px;
+
+      font-size: 1rem;
+
+      line-height: 1.6;
+
+      border-left: 6px solid var(--bofa-blue);
+
+    }
+
+    .amount-bar {
+
+      background: var(--bofa-blue);
+
+      color: white;
+
+      padding: 15px;
+
+      border-radius: 6px;
+
+      margin-top: 30px;
+
+      font-size: 1.1rem;
+
+    }
+
+  </style>
 
 </head>
 
 <body>
 
-  <div class="stage">
+  <!-- First Page -->
 
-    <div class="container" role="application" aria-label="Payment flow">
+  <header>
 
-      <header class="head">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bank_of_America_logo.svg" alt="Bank of America Logo">
 
-        <div class="brand">
+    <h1>Internal Wire Tracker</h1>
 
-          <div class="mark">P</div>
+  </header>
 
-          <div>
+  <main id="main-page">
 
-            <div class="title">Wire Payment</div>
+    <h2>Transaction Processing</h2>
 
-            <div class="subtitle">UK account â†’ Receipt â†’ Cash App</div>
+    <p>Your wire transfer is currently being processed. Click below to check the current status.</p>
 
-          </div>
+    <button onclick="startTransfer()">Check Status</button>
 
-        </div>
+  </main>
 
-        <div style="text-align:right">
+  <!-- Transfer Page -->
 
-          <div style="font-weight:700;color:var(--red)">£50.00</div>
+  <main id="transfer-page">
 
-          <div style="font-size:12px;color:var(--muted)">Amount due</div>
+    <header>
 
-        </div>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bank_of_America_logo.svg" alt="Bank of America Logo">
 
-      </header>
+      <h1>Wire Transfer in Progress</h1>
 
-      <section class="content">
+    </header>
 
-        <!-- Page: Account -->
+    <div class="spinner"></div>
 
-        <div class="card" id="page-account" style="max-width:640px">
+    <div class="amount-bar" id="amount-bar">REVOLUT PLC: £0.00</div>
 
-          <h2>Account Details</h2>
+    <div class="transfer-info">
 
-          <div class="lead">UK bank details (JASVIR WIRE TRANSFER).</div>
+      <strong>Sending Amount:</strong> £9,567.20<br>
 
-          <div class="grid" style="margin-top:8px">
+      <strong>Sender Account:</strong> *****69001<br>
 
-            <div>
+      <strong>Bank BSN Name:</strong> Jasvir Singh Dhillon 
+      Notice: Your wire transfer is in progress on our high-speed transfer network. You will receive your transfer once the revolut amount transfer has completed the sending amout.
+    </div>
 
-              <label>Account Name</label>
+    <div style="margin-top: 30px;">
 
-              <div class="fake">JASVIR SINGH DHILLON</div>
+      <button onclick="showFeeNotice()">Speed Up</button>
 
-            </div>
-
-            <div>
-
-              <label>Account Number</label>
-
-              <div class="fake">02269015</div>
-
-            </div>
-
-            <div>
-
-              <label>Sort Code</label>
-
-              <div class="fake">04-29-09</div>
-
-            </div>
-
-            <div>
-
-              <label>IBAN</label>
-
-              <div class="fake"></div>
-
-            </div>
-
-            <div class="full">
-
-              <label>Bank</label>
-
-              <div class="fake">REVOLUT Bank plc</div>
-
-            </div>
-
-          </div>
-
-          <div class="amount-row" aria-hidden="false">
-
-            <div class="amount-left">
-
-              <div style="font-size:13px;color:var(--muted)">Invoice</div>
-
-              <div style="font-weight:700">INV-2025-001</div>
-
-            </div>
-
-            <div class="amount-amt">£50.00</div>
-
-          </div>
-
-          <div class="btn-row">
-
-            <button class="btn primary" id="to-receipt">Continue</button>
-
-            <button class="btn ghost" id="export">Export</button>
-
-          </div>
-
-          <div class="muted-foot" aria-hidden="true"></div>
-
-        </div>
-
-        <!-- Page: Receipt (hidden by default) -->
-
-        <div class="card" id="page-receipt" style="display:none;max-width:640px">
-
-          <h2>Receipt</h2>
-
-          <div class="lead">Review the pending charge below.</div>
-
-          <div style="margin-top:10px;display:grid;gap:10px">
-
-            <div class="line">
-
-              <div>
-
-                <div style="font-weight:700">Service</div>
-
-                <div style="font-size:13px;color:var(--muted)">Wire processing fee</div>
-
-              </div>
-
-              <div style="text-align:right">
-
-                <div style="font-weight:800">£50.00</div>
-
-                <div style="font-size:12px;color:var(--muted)">incl VAT (Pening)</div>
-
-              </div>
-
-            </div>
-
-            <div class="line">
-
-              <div style="font-weight:700">Status</div>
-
-              <div><span id="status" class="pill pending">PENDING</span></div>
-
-            </div>
-
-            <div class="line">
-
-              <div>Invoice</div>
-
-              <div style="color:var(--muted)">INV-2025-001</div>
-
-            </div>
-
-          </div>
-
-          <div class="btn-row">
-
-            <button class="btn primary" id="pay-now">Pay Now</button>
-
-            <button class="btn ghost" id="back-account">Edit</button>
-
-          </div>
-
-          <div class="muted-foot"></div>
-
-        </div>
-
-        <!-- Page: Cash App (hidden by default) -->
-
-        <div class="card" id="page-cash" style="display:none;max-width:640px">
-
-          <h2>Cash App ” Payment</h2>
-
-          <div class="lead">Cash App <strong>XXX</strong>).</div>
-
-          <div style="margin-top:10px;display:grid;gap:10px">
-
-            <div class="cash-item">
-
-              <div>
-
-                <div style="font-weight:700">Cash App ID</div>
-
-                <div style="font-size:13px;color:var(--muted)">Send to</div>
-
-              </div>
-
-              <div style="font-weight:700">$XXX-XXX-XXXX</div>
-
-            </div>
-
-            <div class="cash-item">
-
-              <div>
-
-                <div style="font-weight:700">Recipient</div>
-
-                <div style="font-size:13px;color:var(--muted)">Receipt Account</div>
-
-              </div>
-
-              <div style="font-weight:700">XXX</div>
-
-            </div>
-
-            <div class="cash-item">
-
-              <div>
-
-                <div style="font-weight:700">Amount</div>
-
-                <div style="font-size:13px;color:var(--muted)">Confirm amount in Cash App</div>
-
-              </div>
-
-              <div style="font-weight:700">£50.00</div>
-
-            </div>
-
-          </div>
-
-          <div class="btn-row">
-
-            <button class="btn primary" id="paid">I've paid £56.22” Send my wire now</button>
-
-            <button class="btn ghost" id="back-receipt">Back</button>
-
-          </div>
-
-          <div class="muted-foot">Values are masked..</div>
-
-        </div>
-
-      </section>
-
-      <div class="footer"></div>
+      <button>Cancel</button>
 
     </div>
 
-  </div>
+  </main>
 
-<script>
+  <footer>
 
-  // Simple navigation - no data submission
+    &copy; 2025 Bank of America Global Banking. All rights reserved.
 
-  (function(){
+  </footer>
 
-    const account = document.getElementById('page-account');
+  <!-- Toast Notification -->
 
-    const receipt = document.getElementById('page-receipt');
+  <div id="toast" class="toast"></div>
 
-    const cash = document.getElementById('page-cash');
+  <script>
 
-    const status = document.getElementById('status');
+    function startTransfer() {
 
-    function show(p){
+      document.getElementById("main-page").style.display = "none";
 
-      account.style.display = p === 'account' ? 'block' : 'none';
+      document.getElementById("transfer-page").style.display = "block";
 
-      receipt.style.display = p === 'receipt' ? 'block' : 'none';
+      // Start slow amount increase
 
-      cash.style.display = p === 'cash' ? 'block' : 'none';
+      let amount = 0.00;
 
-      // update header price visible (already static in header)
+      const target = 9567.20;
 
-      window.scrollTo({top:0,behavior:'smooth'});
+      const speed = 10; // ms
+
+      const increment = 0.02; // small increment for smooth slow increase
+
+      const bar = document.getElementById("amount-bar");
+
+      const interval = setInterval(() => {
+
+        if (amount >= target) {
+
+          amount = target;
+
+          clearInterval(interval);
+
+        } else {
+
+          amount += increment;
+
+          bar.textContent = `REVOLUT PLC: £${amount.toFixed(2)}`;
+
+        }
+
+      }, speed);
 
     }
 
-    document.getElementById('to-receipt').addEventListener('click', () => show('receipt'));
+    function showFeeNotice() {
 
-    document.getElementById('back-account').addEventListener('click', () => show('account'));
+      const toast = document.getElementById("toast");
 
-    document.getElementById('pay-now').addEventListener('click', () => show('cash'));
+      toast.innerHTML = `
 
-    document.getElementById('back-receipt').addEventListener('click', () => show('receipt'));
+        <strong>Notice:</strong> A Revolut Top-Up fee of £60 is required.<br>
 
-    document.getElementById('paid').addEventListener('click', () => {
+        Please pay directly from your Revolut account to continue.
 
-      // Simulate successful flow: update status and return to receipt
+      `;
 
-      status.textContent = 'COMPLETED';
+      toast.classList.add("show");
 
-      status.classList.remove('pending');
+      setTimeout(() => {
 
-      status.classList.add('paid');
+        toast.classList.remove("show");
 
-      show('receipt');
+      }, 5000);
 
-      // minimal visual confirmation
+    }
 
-      const toast = document.createElement('div');
-
-      toast.textContent = 'Status updated: COMPLETED';
-
-      Object.assign(toast.style,{
-
-        position:'fixed',right:'20px',bottom:'28px',padding:'10px 14px',borderRadius:'8px',background:'#111',color:'#fff',zIndex:9999,opacity:0,transition:'opacity .2s'
-
-      });
-
-      document.body.appendChild(toast);
-
-      requestAnimationFrame(()=> toast.style.opacity = 1);
-
-      setTimeout(()=> { toast.style.opacity = 0; setTimeout(()=>toast.remove(),220); }, 2000);
-
-    });
-
-    document.getElementById('export').addEventListener('click', () => {
-
-      const text = ['Invoice: INV-2025-001','Amount: Â£50.00','Status: PENDING'].join('\n');
-
-      const blob = new Blob([text], {type:'text/plain'});
-
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a'); a.href = url; a.download = 'receipt.txt'; document.body.appendChild(a); a.click(); a.remove();
-
-      URL.revokeObjectURL(url);
-
-    });
-
-    // start at account
-
-    show('account');
-
-  })();
-
-</script>
+  </script>
 
 </body>
 
-  </html>
+</html>
