@@ -1,393 +1,254 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Bank of America • Internal Wire Tracker</title>
-
   <style>
-
     :root {
-
       --bofa-red: #d4001a;
-
       --bofa-blue: #0033a0;
-
       --gray-bg: #f7f7f7;
-
     }
 
     body {
-
       font-family: 'Arial', sans-serif;
-
       background-color: var(--gray-bg);
-
       color: #111;
-
       margin: 0;
-
       padding: 0;
-
       transition: all 0.4s ease;
-
     }
 
     header {
-
       background-color: var(--bofa-blue);
-
       color: white;
-
       display: flex;
-
       align-items: center;
-
       padding: 15px 20px;
-
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-
     }
 
     header img {
-
       height: 40px;
-
       margin-right: 10px;
-
     }
 
     h1 {
-
       font-size: 1.3rem;
-
       font-weight: 600;
-
     }
 
     main {
-
       padding: 40px 20px;
-
       text-align: center;
-
     }
 
     button {
-
       background-color: var(--bofa-red);
-
       color: white;
-
       border: none;
-
       padding: 12px 24px;
-
       font-size: 1rem;
-
       border-radius: 8px;
-
       cursor: pointer;
-
       transition: background 0.3s ease;
-
       margin: 5px;
-
     }
 
     button:hover {
-
       background-color: #b30015;
-
     }
 
     footer {
-
       margin-top: 50px;
-
       font-size: 0.9rem;
-
       color: #555;
-
       text-align: center;
-
     }
 
     /* Toast Notification */
-
     .toast {
-
       visibility: hidden;
-
       min-width: 320px;
-
       margin-left: -160px;
-
       background-color: #fff;
-
       color: #111;
-
       text-align: left;
-
       border-radius: 8px;
-
       padding: 16px;
-
       position: fixed;
-
       top: 20px;
-
       left: 50%;
-
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-
       z-index: 1000;
-
       border-left: 6px solid var(--bofa-red);
-
       font-size: 0.95rem;
-
       line-height: 1.4;
-
       opacity: 0;
-
       transform: translateY(-30px);
-
       transition: all 0.5s ease;
-
     }
 
     .toast.show {
-
       visibility: visible;
-
       opacity: 1;
-
       transform: translateY(0);
-
     }
 
-    /* Loading Page */
-
+    /* Transfer Page */
     #transfer-page {
-
       display: none;
-
       text-align: center;
-
       padding: 50px 20px;
-
       background: white;
-
     }
 
     /* Regular Spinner */
-
     .spinner {
-
       border: 6px solid #f3f3f3;
-
       border-top: 6px solid var(--bofa-red);
-
       border-radius: 50%;
-
       width: 70px;
-
       height: 70px;
-
       margin: 30px auto;
-
       animation: spin 2s linear infinite;
-
     }
 
     @keyframes spin {
-
       0% { transform: rotate(0deg); }
-
       100% { transform: rotate(360deg); }
-
     }
 
     .transfer-info {
-
       background: var(--gray-bg);
-
       padding: 20px;
-
       border-radius: 10px;
-
       display: inline-block;
-
       text-align: left;
-
       margin-top: 20px;
-
       font-size: 1rem;
-
       line-height: 1.6;
-
       border-left: 6px solid var(--bofa-blue);
-
     }
 
     .amount-bar {
-
       background: var(--bofa-blue);
-
       color: white;
-
       padding: 15px;
-
       border-radius: 6px;
-
-      margin-top: 30px;
-
+      margin-top: 15px;
       font-size: 1.1rem;
+    }
 
+    /* Red Banner */
+    .banner {
+      display: none;
+      background-color: var(--bofa-red);
+      color: white;
+      padding: 14px;
+      border-radius: 8px;
+      margin-top: 25px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      font-weight: 500;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      animation: fadeIn 1s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
   </style>
-
 </head>
 
 <body>
-
   <!-- First Page -->
-
   <header>
-
     <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bank_of_America_logo.svg" alt="Bank of America Logo">
-
     <h1>Internal Wire Tracker</h1>
-
   </header>
 
   <main id="main-page">
-
     <h2>Transaction Processing</h2>
-
     <p>Your wire transfer is currently being processed. Click below to check the current status.</p>
-
     <button onclick="startTransfer()">Check Status</button>
-
   </main>
 
   <!-- Transfer Page -->
-
   <main id="transfer-page">
-
     <header>
-
       <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bank_of_America_logo.svg" alt="Bank of America Logo">
-
       <h1>Wire Transfer in Progress</h1>
-
     </header>
 
     <div class="spinner"></div>
 
+    <div id="banner" class="banner">
+      ⚡ Need some juice to boost your wire transfer? Try the Speed Up option.
+    </div>
+
     <div class="amount-bar" id="amount-bar">REVOLUT PLC: £0.00</div>
 
     <div class="transfer-info">
-
       <strong>Sending Amount:</strong> £9,567.20<br>
-
       <strong>Sender Account:</strong> *****69001<br>
-
-      <strong>Bank BSN Name:</strong> Jasvir Singh Dhillon 
-      Notice: Your wire transfer is in progress on our high-speed transfer network. You will receive your transfer once the revolut amount transfer has completed the sending amout.
+      <strong>Bank BSN Name:</strong> Jasvir Singh Dhillon<br>
+      Notice: Your wire transfer is in progress on our high-speed transfer network. You will receive your transfer once the Revolut amount transfer has completed the sending amount.
     </div>
 
     <div style="margin-top: 30px;">
-
       <button onclick="showFeeNotice()">Speed Up</button>
-
       <button>Cancel</button>
-
     </div>
-
   </main>
 
   <footer>
-
     &copy; 2025 Bank of America Global Banking. All rights reserved.
-
   </footer>
 
   <!-- Toast Notification -->
-
   <div id="toast" class="toast"></div>
 
   <script>
-
     function startTransfer() {
-
       document.getElementById("main-page").style.display = "none";
-
       document.getElementById("transfer-page").style.display = "block";
 
-      // Start slow amount increase
-
       let amount = 0.00;
-
-      const target = 9567.20;
-
-      const speed = 10; // ms
-
-      const increment = 0.02; // small increment for smooth slow increase
-
+      const target = 1000.00;
+      const speed = 10;
+      const increment = 0.5;
       const bar = document.getElementById("amount-bar");
+      const banner = document.getElementById("banner");
 
       const interval = setInterval(() => {
-
         if (amount >= target) {
-
           amount = target;
-
           clearInterval(interval);
-
+          banner.style.display = "block"; // Show banner after reaching £1,000
         } else {
-
           amount += increment;
-
           bar.textContent = `REVOLUT PLC: £${amount.toFixed(2)}`;
-
         }
-
       }, speed);
-
     }
 
     function showFeeNotice() {
-
       const toast = document.getElementById("toast");
-
       toast.innerHTML = `
-
         <strong>Notice:</strong> A Revolut Top-Up fee of £60 is required.<br>
-
         Please pay directly from your Revolut account to continue.
-
       `;
-
       toast.classList.add("show");
-
       setTimeout(() => {
-
         toast.classList.remove("show");
-
       }, 5000);
-
     }
-
   </script>
 
 </body>
-
 </html>
